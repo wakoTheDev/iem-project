@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from models import db, User
-from models_enhanced import EmployeeFeedback, ProductivityMetrics, DigitalActivity, Collaboration
+from .models import User
+from .models_enhanced import EmployeeFeedback, ProductivityMetrics, DigitalActivity, Collaboration
 from flask_login import login_required, current_user
 from datetime import datetime
 import numpy as np

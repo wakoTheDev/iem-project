@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Personal Productivity -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Personal Productivity</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for metric in user_analytics %}
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-500">{{ metric.metric }}</h4>
+                    <p class="text-3xl font-bold text-indigo-600">{{ "%.2f"|format(metric.value) }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Team Analytics (for managers/admins) -->
+        {% if team_analytics %}
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Team Analytics</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for metric in team_analytics %}
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-500">{{ metric.metric }}</h4>
+                    <p class="text-3xl font-bold text-indigo-600">{{ "%.2f"|format(metric.value) }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Activity Timeline -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Activity Timeline</h3>
+            <div id="activityTimeline" class="h-[300px]">
+                <!-- Chart will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8">
+        <!-- Real-time Stats -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Real-time Statistics</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-500">Active Users</h4>
+                    <p id="activeUsers" class="text-3xl font-bold text-indigo-600">{{ active_users|length }}</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-500">Current Tasks</h4>
+                    <p id="currentTasks" class="text-3xl font-bold text-indigo-600">{{ tasks|length }}</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-500">Productivity Score</h4>
+                    <p id="productivityScore" class="text-3xl font-bold text-indigo-600">{{ productivity_score }}%</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-500">Alerts</h4>
+                    <p id="alertsCount" class="text-3xl font-bold text-indigo-600">{{ alerts|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="mt-6 bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Recent Alerts</h3>
+            <div class="space-y-4">
+                {% for alert in alerts %}
+                <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <h4 class="font-medium text-gray-900">{{ alert.message }}</h4>
+                        <p class="text-sm text-gray-500">{{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs font-medium {% if alert.severity == 'error' %}bg-red-100 text-red-800{% elif alert.severity == 'warning' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %} rounded-full">{{ alert.severity }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize SocketIO
+const socket = io('http://localhost:5000', {
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: 5
+});
+
+// Update real-time stats
+socket.on('real-time-stats', (stats) => {
+    document.getElementById('activeUsers').textContent = stats.active_users;
+    document.getElementById('currentTasks').textContent = stats.current_tasks;
+    document.getElementById('productivityScore').textContent = stats.productivity_score + '%';
+    document.getElementById('alertsCount').textContent = stats.alerts;
+});
+
+// Update activity timeline
+socket.on('activity-update', (data) => {
+    // Update the activity timeline chart
+    updateActivityTimeline(data);
+});
+
+// Function to update activity timeline chart
+function updateActivityTimeline(data) {
+    // Implementation for updating the activity timeline chart
+    // This will depend on your charting library of choice
+}
+</script>
+{% endblock %}

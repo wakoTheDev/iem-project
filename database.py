@@ -7,7 +7,7 @@ login_manager = LoginManager()
 
 @login_manager.user_loader
 def load_user(id):
-    from models import User
+    from .models import User
     return User.query.get(int(id))
 
 # Create the database tables

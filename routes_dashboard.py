@@ -1,10 +1,10 @@
-from flask import Blueprint, jsonify, request, url_for
+from flask import Blueprint, jsonify, request, url_for,redirect
 from flask_login import login_required, current_user
 from datetime import datetime
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from models import db, User, Task, Attendance
-from models_enhanced import EmployeeFeedback, ProductivityMetrics, DigitalActivity, Collaboration
+from .models import db, User, Task, Attendance
+from .models_enhanced import EmployeeFeedback, ProductivityMetrics, DigitalActivity, Collaboration
 
 dashboard = Blueprint('dashboard', __name__, url_prefix='/api/v2')
 
@@ -134,7 +134,7 @@ def get_recent_activities(user_id):
 @dashboard.route('/profile')
 @login_required
 def dashboard_profile():
-    return redirect(url_for('routes.profile'))
+    return redirect(url_for('dashboard.dashboard_profile'))
 
 @dashboard.route('/admin/team-metrics')
 @login_required

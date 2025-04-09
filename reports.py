@@ -3,8 +3,8 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import os
 from fpdf import FPDF
-from models import Activity, Report
-from db import db
+from .models import Activity, Report
+from .db import db
 import json
 
 class ProductivityReport:

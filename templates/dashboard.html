@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Welcome Section -->
+    <div class="bg-white shadow rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <img class="h-12 w-12 rounded-full" src="{{ url_for('static', filename='images/avatar.png') }}" alt="">
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-xl font-bold text-gray-900">Welcome back, {{ current_user.name }}</h2>
+                    <p class="text-sm text-gray-500">{{ current_user.department }} - {{ current_user.position }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Active Users -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-blue-50">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Active Users</dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ active_users|length }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Tasks -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-yellow-50">
+                            <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Pending Tasks</dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ tasks|selectattr('status', 'equalto', 'pending')|list|length }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Hours -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-50">
+                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Work Hours</dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ attendance|selectattr('check_out', '!=', None)|list|length }} hours</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+            <div class="space-y-4">
+                <!-- Tasks -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Recent Tasks</h4>
+                    <div class="space-y-2">
+                        {% for task in tasks[:5] %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-{{ 'green' if task.status == 'completed' else 'yellow' }}-100">
+                                        <svg class="h-5 w-5 text-{{ 'green' if task.status == 'completed' else 'yellow' }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-900">{{ task.title }}</p>
+                                    <p class="text-sm text-gray-500">Due: {{ task.due_date.strftime('%Y-%m-%d') }}</p>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="px-2 py-1 text-xs rounded-full {% if task.status == 'completed' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ task.status }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Attendance -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Recent Attendance</h4>
+                    <div class="space-y-2">
+                        {% for record in attendance[:5] %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-{{ 'green' if record.check_out else 'yellow' }}-100">
+                                        <svg class="h-5 w-5 text-{{ 'green' if record.check_out else 'yellow' }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-900">{{ record.check_in.strftime('%Y-%m-%d') }}</p>
+                                    <p class="text-sm text-gray-500">{{ record.check_in.strftime('%H:%M') }} - {% if record.check_out %}{{ record.check_out.strftime('%H:%M') }}{% else %}Ongoing{% endif %}</p>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="px-2 py-1 text-xs rounded-full {% if record.check_out %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {% if record.check_out %}Complete{% else %}Ongoing{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Recent Alerts</h4>
+                    <div class="space-y-2">
+                        {% for alert in alerts[:5] %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-{{ 'red' if alert.severity == 'error' else 'yellow' if alert.severity == 'warning' else 'blue' }}-100">
+                                        <svg class="h-5 w-5 text-{{ 'red' if alert.severity == 'error' else 'yellow' if alert.severity == 'warning' else 'blue' }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-900">{{ alert.message }}</p>
+                                    <p class="text-sm text-gray-500">{{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="px-2 py-1 text-xs rounded-full bg-{{ 'red' if alert.severity == 'error' else 'yellow' if alert.severity == 'warning' else 'blue' }}-100 text-{{ 'red' if alert.severity == 'error' else 'yellow' if alert.severity == 'warning' else 'blue' }}-800">
+                                    {{ alert.severity }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

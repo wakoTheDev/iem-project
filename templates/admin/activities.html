@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="fas fa-users"></i>
+                            Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_activities') }}">
+                            <i class="fas fa-chart-line"></i>
+                            Activities
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_analytics') }}">
+                            <i class="fas fa-chart-bar"></i>
+                            Analytics
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Activity Log</h1>
+            </div>
+
+            <!-- Activities Table -->
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="activitiesTable">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Activity Type</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Duration</th>
+                                    <th>Productivity Score</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in activities.items %}
+                                <tr>
+                                    <td>{{ activity.user.name }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if activity.activity_type == 'focus' else 'warning' if activity.activity_type == 'meeting' else 'secondary' }}">
+                                            {{ activity.activity_type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ activity.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ activity.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ ((activity.end_time - activity.start_time).total_seconds() / 60)|round|int }} min</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-{{ 'success' if activity.productivity_score >= 80 else 'warning' if activity.productivity_score >= 50 else 'danger' }}"
+                                                role="progressbar"
+                                                style="width: {{ activity.productivity_score }}%"
+                                                aria-valuenow="{{ activity.productivity_score }}"
+                                                aria-valuemin="0"
+                                                aria-valuemax="100">{{ activity.productivity_score }}%</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" onclick="showDetails('{{ activity.details|tojson|safe }}')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav aria-label="Activity pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {{ 'disabled' if not activities.has_prev }}">
+                                <a class="page-link" href="{{ url_for('admin_activities', page=activities.prev_num) if activities.has_prev else '#' }}">Previous</a>
+                            </li>
+                            {% for page_num in activities.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {{ 'active' if page_num == activities.page }}">
+                                        <a class="page-link" href="{{ url_for('admin_activities', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            <li class="page-item {{ 'disabled' if not activities.has_next }}">
+                                <a class="page-link" href="{{ url_for('admin_activities', page=activities.next_num) if activities.has_next else '#' }}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Activity Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="detailsContent" class="bg-light p-3 rounded"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showDetails(details) {
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    document.getElementById('detailsContent').textContent = JSON.stringify(details, null, 2);
+    modal.show();
+}
+
+// Initialize DataTables
+$(document).ready(function() {
+    $('#activitiesTable').DataTable({
+        order: [[2, 'desc']],
+        pageLength: 25,
+        searching: false,
+        paging: false,
+        info: false,
+        language: {
+            emptyTable: "No activities found"
+        }
+    });
+});
+</script>
+{% endblock %}

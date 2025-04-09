@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, redirect, url_for, flash, render_template
-from models import db, User
+from .models import db, User
 from flask_login import LoginManager, login_user, logout_user, login_required
-from routes_dashboard import dashboard
+from .routes_dashboard import dashboard
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
 from flask_limiter import Limiter
@@ -59,7 +59,7 @@ def login():
         flash('Invalid password', 'error')
         return redirect(url_for('login'))
     login_user(user)
-    return redirect(url_for('dashboard'))
+    return redirect(url_for(dashboard))
 
 @app.route('/create_default_user', methods=['POST'])
 def create_default_user():

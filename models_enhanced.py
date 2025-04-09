@@ -1,5 +1,5 @@
 from datetime import datetime
-from models import db
+from .models import db
 
 class EmployeeFeedback(db.Model):
     __tablename__ = 'employee_feedback'

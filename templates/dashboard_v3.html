@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Employee Monitoring - Dashboard v3</title>
+    
+    <!-- Production React -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#3b82f6',
+                            dark: '#1e40af'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .card {
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="{{ 'dark' if current_user.theme_preference == 'dark' else '' }}">
+    <div id="root"></div>
+
+    <!-- Load our React components -->
+    <script src="{{ url_for('static', filename='js/utils/socket.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/MetricCard.jsx') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/components/ChartCard.jsx') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/components/ActivityFeed.jsx') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/Dashboard.jsx') }}" type="text/babel"></script>
+
+    <!-- Initialize the React app -->
+    <script type="text/babel">
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</body>
+</html>

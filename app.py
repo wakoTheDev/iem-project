@@ -3,13 +3,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from flask_socketio import SocketIO, emit
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField
-from wtforms.validators import DataRequired, Length, EqualTo
-from models import User, Task, Attendance, Alert, AnalyticsData, Notification
-from models_enhanced import EmployeeFeedback, ProductivityMetrics, DigitalActivity, Collaboration, ProductivityAnalytics
-from database import db, login_manager, init_db
-from routes_enhanced import enhanced
-from routes_dashboard import dashboard
+from wtforms import StringField, PasswordField, SubmitField,SelectField
+from wtforms.validators import DataRequired, Length, EqualTo,Email
+
+from .models import User, Task, Attendance, Alert, AnalyticsData, Notification
+from .models_enhanced import EmployeeFeedback, ProductivityMetrics, DigitalActivity, Collaboration, ProductivityAnalytics
+from .database import db, login_manager, init_db
+from .routes_enhanced import enhanced
+from .routes_dashboard import dashboard
 import os
 from datetime import datetime, timedelta
 from functools import wraps
@@ -36,6 +37,7 @@ with app.app_context():
 
 app.register_blueprint(enhanced, url_prefix='/v2')
 app.register_blueprint(dashboard)
+# app.register_blueprint(routes)
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
@@ -43,11 +45,15 @@ class LoginForm(FlaskForm):
     theme = SelectField('Theme', choices=[('light', 'Light'), ('dark', 'Dark')])
 
 class SignupForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
-    name = StringField('Name', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[
+        DataRequired(), EqualTo('password', message='Passwords must match')
+    ])
+    name = StringField('Full Name', validators=[DataRequired()])
     department = StringField('Department', validators=[DataRequired()])
     position = StringField('Position', validators=[DataRequired()])
+    submit = SubmitField('Create Account')
 
 class ForgotPasswordForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
@@ -83,7 +89,7 @@ def login():
                 return render_template('login.html', form=form)
                 
             print(f"Attempting login for: {email}")  # Debug
-            print(f"Stored hash: {user.password}")  # Debug
+            print(f"Stored hash: {user.password_hash}")  # Debug
             print(f"Password check result: {user.check_password(password)}")  # Debug
             
             if not user.check_password(password):
@@ -101,7 +107,7 @@ def login():
             
             flash('Logged in successfully!', 'success')
             print("Redirecting to dashboard...")  # Debug
-            return redirect ('dashboard')
+            return redirect (url_for('dashboard'))
             
         except Exception as e:
             app.logger.error(f'Login error: {str(e)}')
@@ -115,7 +121,7 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if current_user.is_authenticated:
-        return redirect('dashboard')
+        return redirect(url_for('dashboard'))
     
     form = SignupForm()
     if form.validate_on_submit():
@@ -138,7 +144,7 @@ def signup():
             
             login_user(user)
             flash('Account created successfully!', 'success')
-            return redirect('dashboard')
+            return redirect(url_for('dashboard'))
             
         except Exception as e:
             app.logger.error(f'Signup error: {str(e)}')
@@ -399,6 +405,119 @@ def test_login():
         login_user(user)
         return "Login successful!"
     return "Login failed"
+@app.route('/attendance', methods=['GET'])
+@login_required
+def attendance():
+    try:
+        user_attendance = Attendance.query.filter_by(user_id=current_user.id).order_by(Attendance.check_in.desc()).all()
+        return render_template('attendance.html', attendance=user_attendance)
+    except Exception as e:
+        app.logger.error(f'Attendance error: {str(e)}')
+        flash('An error occurred while loading attendance data', 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/tasks', endpoint='tasks')
+def tasks():
+    return render_template('tasks.html')
+
+@app.route('/tasks/new', methods=['GET', 'POST'])
+@login_required
+def new_task():
+    if request.method == 'POST':
+        try:
+            title = request.form.get('title')
+            description = request.form.get('description')
+            due_date_str = request.form.get('due_date')
+            priority = request.form.get('priority')
+            assigned_to_id = request.form.get('assigned_to')
+            
+            # Validate required fields
+            if not title or not due_date_str:
+                flash('Title and due date are required', 'error')
+                return redirect(url_for('new_task'))
+            
+            # Parse due date
+            try:
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
+            except ValueError:
+                flash('Invalid date format', 'error')
+                return redirect(url_for('new_task'))
+            
+            # Create new task
+            task = Task(
+                title=title,
+                description=description,
+                due_date=due_date,
+                priority=priority or 'medium',
+                status='pending',
+                created_by=current_user.id,
+                assigned_to=assigned_to_id or current_user.id
+            )
+            
+            db.session.add(task)
+            db.session.commit()
+            
+            flash('Task created successfully', 'success')
+            return redirect(url_for('tasks'))
+            
+        except Exception as e:
+            app.logger.error(f'Error creating task: {str(e)}')
+            flash('An error occurred while creating the task', 'error')
+            return redirect(url_for('new_task'))
+    
+    # For GET requests, render the form
+    users = User.query.all()
+    return render_template('new_task.html', users=users)
+
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html')
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        try:
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+            
+            # Validate input
+            if not current_password or not new_password or not confirm_password:
+                flash('All fields are required', 'error')
+                return redirect(url_for('change_password'))
+                
+            if new_password != confirm_password:
+                flash('New passwords do not match', 'error')
+                return redirect(url_for('change_password'))
+                
+            # Verify current password
+            if not current_user.check_password(current_password):
+                flash('Current password is incorrect', 'error')
+                return redirect(url_for('change_password'))
+                
+            # Update password
+            current_user.set_password(new_password)
+            db.session.commit()
+            
+            flash('Your password has been updated successfully', 'success')
+            return redirect(url_for('profile'))
+            
+        except Exception as e:
+            app.logger.error(f'Password change error: {str(e)}')
+            flash('An error occurred while updating your password', 'error')
+            return redirect(url_for('change_password'))
+    
+    return render_template('change_password.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out successfully.', 'success')
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     with app.app_context():
